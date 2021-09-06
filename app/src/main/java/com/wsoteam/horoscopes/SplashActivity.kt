@@ -264,7 +264,7 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
                 }
             }
         })
-        //goNext() //
+        ////goNext() //
 
         if (PreferencesProvider.getBirthday() != "") {
             CacheData.setObserver(object : ICachedData {
