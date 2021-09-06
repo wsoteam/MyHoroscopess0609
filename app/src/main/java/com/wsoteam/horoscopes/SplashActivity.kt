@@ -264,7 +264,6 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
                 }
             }
         })
-        ////goNext() //
 
         if (PreferencesProvider.getBirthday() != "") {
             CacheData.setObserver(object : ICachedData {
@@ -283,7 +282,7 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
         try {
             trackUser()
         } catch (ex: Exception) {
-            L.log("crash")
+            //L.log("crash")
             Analytic.crashAttr()
         }
         CoroutineScope(Dispatchers.IO).launch {
@@ -293,7 +292,7 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
             }else{
                 postGoNext(1, "sleep4")
             }
-            Log.e("LOL", "sleep")
+            //Log.e("LOL", "sleep")
         }
         if (intent.getStringExtra(Config.OPEN_FROM_NOTIFY) != null) {
             when (intent.getStringExtra(Config.OPEN_FROM_NOTIFY)) {
@@ -359,7 +358,7 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
             outputStream.close()
             uri = FileProvider.getUriForFile(context, "com.mydomain.fileprovider", file)
         } catch (ex: Exception) {
-            L.log("save error")
+           // L.log("save error")
         }
         return uri
     }
