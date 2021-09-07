@@ -1,17 +1,24 @@
 package com.wsoteam.horoscopes
 
+import android.content.Context
+import android.os.AsyncTask
 import android.os.Handler
+import android.util.Log
 import androidx.multidex.MultiDexApplication
 import com.amplitude.api.Amplitude
 import com.bugfender.sdk.Bugfender
 import com.facebook.FacebookSdk
 import com.facebook.appevents.AppEventsLogger
+import com.google.android.gms.ads.identifier.AdvertisingIdClient
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException
+import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.qonversion.android.sdk.Qonversion
 import com.userexperior.UserExperior
 import com.wsoteam.horoscopes.utils.SubscriptionProvider
 import com.wsoteam.horoscopes.utils.id.Creator
 import com.yandex.metrica.YandexMetrica
 import com.yandex.metrica.YandexMetricaConfig
+import java.io.IOException
 
 class App : MultiDexApplication() {
 
@@ -26,22 +33,12 @@ class App : MultiDexApplication() {
             YandexMetricaConfig.newConfigBuilder(getString(R.string.yam_id)).build()
         YandexMetrica.activate(applicationContext, config)
         YandexMetrica.enableActivityAutoTracking(this)
-        if(BuildConfig.DEBUG) {
-            //Bugsee.launch(this, "1187e351-e756-4bad-80af-5efa69a3ff56") //wadimkazak@mail.ru
-            UserExperior.startRecording(getApplicationContext(), getString(R.string.debug_user_expirior_id));
-        }else{
-            UserExperior.startRecording(getApplicationContext(), getString(R.string.release_user_expirior_id));
-        }
         Amplitude.getInstance()
             .initialize(this, getString(R.string.amplitude_id))
             .enableForegroundTracking(this)
 
         applicationHandler =  Handler(applicationContext.mainLooper)
 
-        Bugfender.init(this, getString(R.string.fender_id), BuildConfig.DEBUG)
-        Bugfender.enableCrashReporting()
-        Bugfender.enableUIEventLogging(this)
-        Bugfender.enableLogcatLogging() // optional, if you want logs automatically collected from logcat
 
         Qonversion.initialize(this, getString(R.string.qonversion_id), Creator.getId())
         //Smartlook.setupAndStartRecording(getString(R.string.smartlock_id))
@@ -51,7 +48,24 @@ class App : MultiDexApplication() {
         AppEventsLogger.activateApp(applicationContext)
     }
 
+    fun getAdvertisingId(context: Context) {
+        AsyncTask.execute {
+            try {
+                val adInfo = AdvertisingIdClient.getAdvertisingIdInfo(context)
+                gadid = adInfo?.id
+            } catch (exception: IOException) {
+                Log.i("TAG_EXCEPTION", exception.toString())
+            } catch (exception: GooglePlayServicesRepairableException) {
+                Log.i("TAG_EXCEPTION", exception.toString())
+            } catch (exception: GooglePlayServicesNotAvailableException) {
+                Log.i("TAG_EXCEPTION", exception.toString())
+            }
+        }
+    }
+
     companion object {
+        var campaign: String = "null"
+        var gadid:String? = null
 
         private lateinit var sInstance: App
 
