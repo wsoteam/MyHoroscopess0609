@@ -9,7 +9,6 @@ import com.wsoteam.horoscopes.presentation.form.FormActivity
 import com.wsoteam.horoscopes.utils.InAppCallback
 import com.wsoteam.horoscopes.utils.PreferencesProvider
 import com.wsoteam.horoscopes.utils.PriceManager
-import com.wsoteam.horoscopes.utils.SubscriptionProvider
 import com.wsoteam.horoscopes.utils.analytics.Analytic
 import com.wsoteam.horoscopes.utils.analytics.FBAnalytic
 import kotlinx.android.synthetic.main.privacy_police_activity.*
@@ -24,12 +23,7 @@ class PrivacyPoliceActivity : AppCompatActivity(R.layout.privacy_police_activity
         }
 
         btnPay.setOnClickListener { _ ->
-            SubscriptionProvider.startChoiseSub(this, PriceManager.getSubId(), object :
-                InAppCallback {
-                override fun trialSucces() {
-                    handlInApp()
-                }
-            })
+
         }
     }
 

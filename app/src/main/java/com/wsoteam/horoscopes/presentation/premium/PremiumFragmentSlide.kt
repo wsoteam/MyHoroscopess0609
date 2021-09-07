@@ -13,10 +13,8 @@ import com.wsoteam.horoscopes.R
 import com.wsoteam.horoscopes.presentation.premium.pager.OnboardAdapter
 import com.wsoteam.horoscopes.utils.InAppCallback
 import com.wsoteam.horoscopes.utils.PreferencesProvider
-import com.wsoteam.horoscopes.utils.SubscriptionProvider
 import com.wsoteam.horoscopes.utils.analytics.Analytic
 import com.wsoteam.horoscopes.utils.analytics.FBAnalytic
-import com.wsoteam.horoscopes.utils.loger.L
 import kotlinx.android.synthetic.main.premium_slide_fragment.*
 
 class PremiumFragmentSlide : Fragment(R.layout.premium_slide_fragment) {
@@ -63,12 +61,7 @@ class PremiumFragmentSlide : Fragment(R.layout.premium_slide_fragment) {
 
 
         btnPay.setOnClickListener { _ ->
-            SubscriptionProvider.startChoiseSub(activity!!, Config.ID_PRICE, object :
-                InAppCallback {
-                override fun trialSucces() {
-                    handlInApp()
-                }
-            })
+
         }
 
         tvLater.setOnClickListener {

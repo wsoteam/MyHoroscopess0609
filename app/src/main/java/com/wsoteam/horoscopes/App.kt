@@ -6,15 +6,15 @@ import android.os.Handler
 import android.util.Log
 import androidx.multidex.MultiDexApplication
 import com.amplitude.api.Amplitude
-import com.bugfender.sdk.Bugfender
+import com.appsflyer.AppsFlyerConversionListener
+import com.appsflyer.AppsFlyerLib
 import com.facebook.FacebookSdk
 import com.facebook.appevents.AppEventsLogger
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException
 import com.google.android.gms.common.GooglePlayServicesRepairableException
+import com.google.firebase.FirebaseApp
 import com.qonversion.android.sdk.Qonversion
-import com.userexperior.UserExperior
-import com.wsoteam.horoscopes.utils.SubscriptionProvider
 import com.wsoteam.horoscopes.utils.id.Creator
 import com.yandex.metrica.YandexMetrica
 import com.yandex.metrica.YandexMetricaConfig
@@ -24,11 +24,11 @@ class App : MultiDexApplication() {
 
     @Volatile
     var applicationHandler: Handler? = null
+    private val afDevKey = "fTHMhfusDFFptFAiXDJ2fU"
 
     override fun onCreate() {
         super.onCreate()
         sInstance = this
-        SubscriptionProvider.init(this)
         val config =
             YandexMetricaConfig.newConfigBuilder(getString(R.string.yam_id)).build()
         YandexMetrica.activate(applicationContext, config)
@@ -46,6 +46,29 @@ class App : MultiDexApplication() {
         FacebookSdk.setAutoInitEnabled(true)
         FacebookSdk.setAutoLogAppEventsEnabled(true)
         AppEventsLogger.activateApp(applicationContext)
+
+        ///////////////////
+        FirebaseApp.initializeApp(this)
+
+        val conversionDataListener  = object : AppsFlyerConversionListener {
+            override fun onConversionDataSuccess(data: MutableMap<String, Any>?) {
+                campaign = data!!["campaign"].toString()
+            }
+            override fun onConversionDataFail(error: String?) {
+                //Log.e("LOG_TAG", "error onAttributionFailure :  $error")
+            }
+            override fun onAppOpenAttribution(data: MutableMap<String, String>?) {
+                data?.map {
+                    //Log.d("LOG_TAG", "onAppOpen_attribute: ${it.key} = ${it.value}")
+                }
+            }
+            override fun onAttributionFailure(error: String?) {
+                //Log.e("LOG_TAG", "error onAttributionFailure :  $error")
+            }
+        }
+        AppsFlyerLib.getInstance().init(afDevKey, conversionDataListener, applicationContext)
+        AppsFlyerLib.getInstance().start(this)
+        ///////////////////////////
     }
 
     fun getAdvertisingId(context: Context) {

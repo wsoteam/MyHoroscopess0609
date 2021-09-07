@@ -3,11 +3,10 @@ package com.wsoteam.horoscopes.utils.lk
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import java.lang.Exception
+import com.wsoteam.horoscopes.App
 
 class WV {
     private val variables = Variables()
@@ -24,14 +23,17 @@ class WV {
         wov.settings.allowFileAccess = true
         wov.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-                return if (url == null || url.startsWith("http://") || url.startsWith("https://")) false else try {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    view.context.startActivity(intent)
-                    true
-                } catch (e: Exception) {
-                    Log.i("TAG", "shouldOverrideUrlLoading Exception:$e")
-                    true
+                if (url!!.startsWith("sms:")) {
+                    var intent = Intent(Intent.ACTION_VIEW, Uri.parse(url!!))
+                    intent.addCategory(Intent.CATEGORY_DEFAULT)
+                    intent.addCategory(Intent.CATEGORY_BROWSABLE)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    App.getInstance().startActivity(intent)
+
+                } else {
+                    view!!.loadUrl(url!!)
                 }
+                return true
             }
 
             override fun onPageFinished(view: WebView, url: String) {

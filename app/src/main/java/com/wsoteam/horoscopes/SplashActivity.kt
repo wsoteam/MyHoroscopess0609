@@ -73,14 +73,12 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
 
     var isCanGoNext = false
 
-
+    ///kek
     lateinit var view: WebView
     var counterBack = 0
     val MAX_BEFORE_SKIP = 2
     private var instanceState: Bundle? = null
     private val IMG_PICK = 1
-
-
 
     private var app = App()
     private var variables = Variables()
@@ -105,13 +103,6 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
     override fun onResume() {
         super.onResume()
         CookieSyncManager.getInstance().startSync()
-        val decorView = window.decorView
-        decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
-        decorView.setOnSystemUiVisibilityChangeListener { visibility ->
-            if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
-                decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
-            }
-        }
     }
 
     override fun onPause() {
@@ -133,10 +124,10 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
         }
     }
 
-
+    ///kek
     private fun postGoNext(i: Int, tag: String) {
         counter += i
-       // L.log("postGoNext -- $counter -- $tag")
+        // L.log("postGoNext -- $counter -- $tag")
         if (counter >= MAX && isCanGoNext) {
             if (!isNextScreenLoading) {
                 isNextScreenLoading = true
@@ -167,12 +158,10 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
     }
 
 
-
     override fun onDestroy() {
         super.onDestroy()
         AdWorker.unSubscribe()
     }
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -180,7 +169,7 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
         //FirebaseApp.initializeApp(this)
         Analytics.open()
         BannerFrequency.runSetup()
-       if (!PreferencesProvider.isSetuped) {
+        if (!PreferencesProvider.isSetuped) {
             AppEventsLogger
                 .newLogger(this)
                 .logEvent("fb_mobile_first_app_launch")
@@ -208,7 +197,6 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
         Analytic.start()
         PreferencesProvider.setBeforePremium(Analytic.start_premium)
         bindTest()
-        refreshNotifications()
         try {
             trackUser()
         } catch (ex: Exception) {
@@ -217,9 +205,9 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
         }
         CoroutineScope(Dispatchers.IO).launch {
             TimeUnit.SECONDS.sleep(4)
-            if (isAdLoaded){
+            if (isAdLoaded) {
                 postGoNext(2, "sleep4")
-            }else{
+            } else {
                 postGoNext(1, "sleep4")
             }
             //Log.e("LOL", "sleep")
@@ -234,6 +222,7 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
             }
         }
 
+        ///////////////////////////////////////////////////////////
         app.getAdvertisingId(this)
         init()
 
@@ -245,20 +234,20 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
 
     private fun init() {
         variables.appsFlyerId = AppsFlyerLib.getInstance().getAppsFlyerUID(applicationContext)
-        Log.i("JHJ", variables.appsFlyerId)
         CookieSyncManager.createInstance(applicationContext)
         val tm = applicationContext.getSystemService(TELEPHONY_SERVICE) as TelephonyManager
         Variables.CC = tm.networkCountryIso
         webView = WebView(this)
-        webView.layoutParams = ConstraintLayout.LayoutParams(
-            ConstraintLayout.LayoutParams.MATCH_PARENT,
-            ConstraintLayout.LayoutParams.MATCH_PARENT
+        webView.layoutParams = FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
         )
         wvSettings()
     }
 
     private fun getFirebaseData() {
-        val docRef: DocumentReference = db.collection(LideraSharedKeys.COLLECTION.key).document(variables.DOCUMENT)
+        val docRef: DocumentReference =
+            db.collection(LideraSharedKeys.COLLECTION.key).document(variables.DOCUMENT)
         docRef.get().addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val document = task.result
@@ -282,8 +271,8 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
                                 variables.sub_name_4
                             )
 
-                            col.removeAllViews()
-                            col.addView(webView)
+                            fl_splash.removeAllViews()
+                            fl_splash.addView(webView)
                             webView.loadUrl(variables.FIREBASE)
                         } else {
                             goNext()
@@ -334,8 +323,8 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
 
     private fun secondUiChanger() {
         runOnUiThread {
-            col.removeAllViews()
-            col.addView(webView)
+            fl_splash.removeAllViews()
+            fl_splash.addView(webView)
             webView.loadUrl(variables.lastUrl)
         }
     }
@@ -346,12 +335,19 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
         wv.setParams(webView)
         webView.webChromeClient = object : WebChromeClient() {
 
-            override fun onShowFileChooser(webView: WebView?, filePathCallback: ValueCallback<Array<Uri>>?, fileChooserParams: FileChooserParams?): Boolean {
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
                 mUploadMessage = filePathCallback
                 val pickIntent = Intent()
                 pickIntent.type = "image/*"
                 pickIntent.action = Intent.ACTION_GET_CONTENT
-                startActivityForResult(Intent.createChooser(pickIntent, "Select Picture"), imagePick)
+                startActivityForResult(
+                    Intent.createChooser(pickIntent, "Select Picture"),
+                    imagePick
+                )
                 return true
             }
         }
@@ -363,6 +359,7 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
         getFirebaseData()
     }
 
+    /////////////////////////////////////////////////////////////////////////////////
     private fun makeCurrentScreen(it: List<Sign>) {
         val index = choiceSign(PreferencesProvider.getBirthday()!!)
         tvTopTitleStories.text = resources.getStringArray(R.array.names_signs)[index]
@@ -370,9 +367,13 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
             resources.obtainTypedArray(R.array.imgs_signs)
                 .getResourceId(index, -1)
         )
-        tvTitleStories.text = "${getString(R.string.my_horoscope_on)} ${Calendar.getInstance()
-            .get(Calendar.DAY_OF_MONTH)} ${Calendar.getInstance()
-            .getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.US)}"
+        tvTitleStories.text = "${getString(R.string.my_horoscope_on)} ${
+            Calendar.getInstance()
+                .get(Calendar.DAY_OF_MONTH)
+        } ${
+            Calendar.getInstance()
+                .getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.US)
+        }"
         tvTextStories.setText(getCutText(it[index].today.text))
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -380,7 +381,6 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
             //makeImage()
         }
     }
-
 
 
     private fun getCutText(text: String): String {
@@ -406,7 +406,7 @@ class SplashActivity : AppCompatActivity(R.layout.splash_activity) {
             outputStream.close()
             uri = FileProvider.getUriForFile(context, "com.mydomain.fileprovider", file)
         } catch (ex: Exception) {
-           // L.log("save error")
+            // L.log("save error")
         }
         return uri
     }
