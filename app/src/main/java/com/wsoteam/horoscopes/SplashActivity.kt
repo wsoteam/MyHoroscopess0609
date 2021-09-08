@@ -31,7 +31,6 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.wsoteam.horoscopes.bl.Client
 import com.wsoteam.horoscopes.models.Sign
 import com.wsoteam.horoscopes.notification.AlarmReceiver
 import com.wsoteam.horoscopes.notification.EveningAlarmReceiver
