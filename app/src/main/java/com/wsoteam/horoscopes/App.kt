@@ -16,8 +16,6 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException
 import com.google.firebase.FirebaseApp
 import com.qonversion.android.sdk.Qonversion
 import com.wsoteam.horoscopes.utils.id.Creator
-import com.yandex.metrica.YandexMetrica
-import com.yandex.metrica.YandexMetricaConfig
 import java.io.IOException
 
 class App : MultiDexApplication() {
@@ -29,10 +27,6 @@ class App : MultiDexApplication() {
     override fun onCreate() {
         super.onCreate()
         sInstance = this
-        val config =
-            YandexMetricaConfig.newConfigBuilder(getString(R.string.yam_id)).build()
-        YandexMetrica.activate(applicationContext, config)
-        YandexMetrica.enableActivityAutoTracking(this)
         Amplitude.getInstance()
             .initialize(this, getString(R.string.amplitude_id))
             .enableForegroundTracking(this)

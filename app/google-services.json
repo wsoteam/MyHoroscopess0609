@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "1087762785637",
-    "project_id": "horo0609",
-    "storage_bucket": "horo0609.appspot.com"
+    "project_number": "244797025574",
+    "project_id": "horo060609",
+    "storage_bucket": "horo060609.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1087762785637:android:2ff006d6bb4971385e6d8c",
+        "mobilesdk_app_id": "1:244797025574:android:20e6f977c56d9af3d1e5e7",
         "android_client_info": {
-          "package_name": "com.myhhoroscopess.comcom"
+          "package_name": "com.myhhoroscopess.comcomvake"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1087762785637-n70pdiacolieie1cmks2q9gnv8m8v6e5.apps.googleusercontent.com",
+          "client_id": "244797025574-3odufeucm6akqf7nar8g15k6da28gicp.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDmVuYqNWnLU4Y5ZpSg2GtVzIePUHudagE"
+          "current_key": "AIzaSyC_r0tkBEgCdewdixQEFpcL7VVFXg1Ql-0"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1087762785637-n70pdiacolieie1cmks2q9gnv8m8v6e5.apps.googleusercontent.com",
+              "client_id": "244797025574-3odufeucm6akqf7nar8g15k6da28gicp.apps.googleusercontent.com",
               "client_type": 3
             }
           ]
